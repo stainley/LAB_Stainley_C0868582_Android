@@ -1,12 +1,17 @@
 package com.stainley.lab.lab_stainley_c0868582_android.view;
 
+import static android.app.PendingIntent.getActivity;
+
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
+import android.app.ActionBar;
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
@@ -15,6 +20,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -26,9 +32,11 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.stainley.lab.lab_stainley_c0868582_android.R;
 import com.stainley.lab.lab_stainley_c0868582_android.databinding.ActivityMapsBinding;
+import com.stainley.lab.lab_stainley_c0868582_android.model.Place;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
     private static final String TAG = MapsActivity.class.getName();
@@ -38,6 +46,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LocationManager locationManager;
     private LocationListener locationListener;
 
+    private double latitude;
+    private double longitude;
+    private Place place;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,11 +58,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         setContentView(binding.getRoot());
 
 
-
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
+
+        if (getActionBar() != null)
+            getActionBar().setDisplayHomeAsUpEnabled(true);
+
+        assert mapFragment != null;
         mapFragment.getMapAsync(this);
+
+        Intent myPlaceIntent = getIntent();
+        Place myFavoritePlace  = (Place) myPlaceIntent.getSerializableExtra("my_place");
+
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         locationListener = location -> {
             Log.i(TAG, "onLocationChanged: " + location);
@@ -96,16 +116,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 List<Address> addressList = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
                 if (addressList != null && addressList.size() > 0) {
                     address.append("\n");
-
+                    place = new Place();
                     // street name
-                    if (addressList.get(0).getThoroughfare() != null)
+                    if (addressList.get(0).getThoroughfare() != null) {
+                        place.setThoroughfare(addressList.get(0).getThoroughfare());
                         address.append(addressList.get(0).getThoroughfare()).append("\n");
-                    if (addressList.get(0).getLocality() != null)
+                    }
+                    if (addressList.get(0).getLocality() != null) {
+                        place.setLocality(addressList.get(0).getLocality());
                         address.append(addressList.get(0).getLocality()).append(" ");
-                    if (addressList.get(0).getPostalCode() != null)
+                    }
+
+                    if (addressList.get(0).getPostalCode() != null) {
+                        place.setPostalCode(addressList.get(0).getPostalCode());
                         address.append(addressList.get(0).getPostalCode()).append(" ");
-                    if (addressList.get(0).getAdminArea() != null)
+                    }
+                    if (addressList.get(0).getAdminArea() != null) {
+                        place.setAdminArea(addressList.get(0).getAdminArea());
                         address.append(addressList.get(0).getAdminArea());
+                    }
                 }
             } catch (Exception e) {
                 address.append("Could not find the address");
@@ -129,6 +158,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             System.out.println(marker.getTitle());
             // TODO: save into the DATABASE
             Log.i(TAG, "onMarkerClicked");
+
+
+            Toast.makeText(this, "Places has been saved", Toast.LENGTH_SHORT).show();
+            Intent intentPlace = new Intent();
+            intentPlace.putExtra("favoritePlace", place);
+
+            setResult(Activity.RESULT_OK, intentPlace);
+            finish();
             return false;
         });
 

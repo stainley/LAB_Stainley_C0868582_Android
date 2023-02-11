@@ -33,7 +33,9 @@
 
         <activity
             android:name=".view.MapsActivity"
+            android:parentActivityName=".MainActivity"
             android:exported="false"
+            android:theme="@style/Theme.LAB_stainley_C0868582_android"
             android:label="@string/title_activity_maps" />
         <activity
             android:name=".MainActivity"
