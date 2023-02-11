@@ -276,8 +276,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 favoriteMarkerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
                 placeDetailMarker(marker.getPosition(), favoriteMarkerOptions);
 
-                myFavoritePlace = place;
-                // TODO: update in the DATABASE
+                myFavoritePlace.setAdminArea(place.getAdminArea());
+                myFavoritePlace.setLocality(place.getLocality());
+                myFavoritePlace.setLongitude(place.getLongitude());
+                myFavoritePlace.setLatitude(place.getLatitude());
+                myFavoritePlace.setThoroughfare(place.getThoroughfare());
+                myFavoritePlace.setPostalCode(place.getPostalCode());
+
                 updatePlace(myFavoritePlace);
 
             }
