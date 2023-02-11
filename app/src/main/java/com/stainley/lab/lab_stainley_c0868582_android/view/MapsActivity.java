@@ -29,6 +29,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.stainley.lab.lab_stainley_c0868582_android.R;
 import com.stainley.lab.lab_stainley_c0868582_android.databinding.ActivityMapsBinding;
@@ -47,6 +48,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LocationListener locationListener;
 
     private Place place;
+    private Marker marker;
     private Place myFavoritePlace;
 
     @Override
@@ -66,7 +68,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (getActionBar() != null)
             getActionBar().setDisplayHomeAsUpEnabled(true);
 
-        binding.changeMapMode.setOnClickListener(this::changeMapMode);
+        binding.savePlace.setOnClickListener(this::savePlace);
 
 
         assert mapFragment != null;
@@ -125,9 +127,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return false;
     }
 
-    public void changeMapMode(View view) {
+    public void savePlace(View view) {
 
+        PlaceViewModel placeViewModel = new ViewModelProvider.AndroidViewModelFactory(getApplication()).create(PlaceViewModel.class);
+        Toast.makeText(this, "Places has been saved", Toast.LENGTH_SHORT).show();
+
+        placeViewModel.insertPlace(place);
+        finish();
     }
+
 
     /**
      * Manipulates the map once available.
@@ -140,6 +148,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        if(marker != null) {
+            marker.remove();
+        }
+
         mMap = googleMap;
         mMap.setMinZoomPreference(15);
         LatLng placeOnMap;
@@ -156,6 +168,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         mMap.setOnMapLongClickListener(latLng -> {
+
             Log.i(TAG, "onLongClickListener: " + latLng);
             Geocoder geocoder = new Geocoder(this, Locale.getDefault());
             StringBuilder address = new StringBuilder();
@@ -202,14 +215,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         });
 
-        mMap.setOnMarkerClickListener(marker -> {
-            PlaceViewModel placeViewModel = new ViewModelProvider.AndroidViewModelFactory(getApplication()).create(PlaceViewModel.class);
-            Toast.makeText(this, "Places has been saved", Toast.LENGTH_SHORT).show();
 
-            placeViewModel.insertPlace(place);
-            finish();
-            return false;
-        });
 
     }
 
