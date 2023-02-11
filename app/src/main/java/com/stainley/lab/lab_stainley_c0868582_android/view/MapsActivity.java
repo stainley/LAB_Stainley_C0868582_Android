@@ -16,6 +16,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.SearchView;
 import android.widget.Toast;
 import android.widget.Toolbar;
 
@@ -38,6 +39,7 @@ import com.stainley.lab.lab_stainley_c0868582_android.databinding.ActivityMapsBi
 import com.stainley.lab.lab_stainley_c0868582_android.model.Place;
 import com.stainley.lab.lab_stainley_c0868582_android.viewmodel.PlaceViewModel;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
@@ -56,6 +58,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private List<Marker> markers = new ArrayList<>();
     private Place myFavoritePlace;
 
+    private SearchView searchView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,6 +76,65 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (getActionBar() != null) getActionBar().setDisplayHomeAsUpEnabled(true);
 
         binding.savePlace.setOnClickListener(this::savePlace);
+
+        searchView = binding.searchOnMap;
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                String location = searchView.getQuery().toString();
+
+                List<Address> addressList = new ArrayList<>();
+                place = new Place();
+                // checking if the entered location is null or not.
+                if (location != null || location.equals("")) {
+                    // on below line we are creating and initializing a geo coder.
+
+                    Geocoder geocoder = new Geocoder(MapsActivity.this);
+                    try {
+
+                        addressList = geocoder.getFromLocationName(location, 1);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    // on below line we are getting the location
+                    // from our list a first position.
+                    Address address = addressList.get(0);
+
+                    place.setLatitude(address.getLatitude());
+                    place.setLongitude(address.getLongitude());
+
+                    if (address.getLocality() != null) {
+                        place.setLocality(address.getLocality());
+                    }
+
+                    if (address.getAdminArea() != null) {
+                        place.setAdminArea(address.getAdminArea());
+                    }
+
+                    if (address.getThoroughfare() != null) {
+                        place.setThoroughfare(address.getThoroughfare());
+                    }
+
+                    if (address.getPostalCode() != null) {
+                        place.setPostalCode(address.getPostalCode());
+                    }
+
+                    LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
+
+                    mMap.addMarker(new MarkerOptions().position(latLng).title(location));
+
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10));
+
+                }
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
 
         assert mapFragment != null;
         mapFragment.getMapAsync(this);
@@ -186,58 +249,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             favoriteMarkerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
 
             Log.i(TAG, "onLongClickListener: " + latLng);
-            //placeDetailMarker(latLng, favoriteMarkerOptions);
-            Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-            StringBuilder address = new StringBuilder();
-            try {
-                List<Address> addressList = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
-                if (addressList != null && addressList.size() > 0) {
-                    address.append("\n");
-                    place = new Place();
-                    place.setLatitude(latLng.latitude);
-                    place.setLongitude(latLng.longitude);
-                    // street name
-                    if (addressList.get(0).getThoroughfare() != null) {
-                        place.setThoroughfare(addressList.get(0).getThoroughfare());
-                        address.append(addressList.get(0).getThoroughfare()).append("\n");
-                    }
-                    if (addressList.get(0).getLocality() != null) {
-                        place.setLocality(addressList.get(0).getLocality());
-                        address.append(addressList.get(0).getLocality()).append(" ");
-                    }
-
-                    if (addressList.get(0).getPostalCode() != null) {
-                        place.setPostalCode(addressList.get(0).getPostalCode());
-                        address.append(addressList.get(0).getPostalCode()).append(" ");
-                    }
-                    if (addressList.get(0).getAdminArea() != null) {
-                        place.setAdminArea(addressList.get(0).getAdminArea());
-                        address.append(addressList.get(0).getAdminArea());
-                    }
-                }
-            } catch (Exception e) {
-                address.append("Could not find the address");
-                e.printStackTrace();
-                place = new Place();
-                place.setLatitude(latLng.latitude);
-                place.setLongitude(latLng.longitude);
-                place.setLocality(new Date().toString());
-                favoriteMarkerOptions.title(place.getLocality());
-                Marker marker = mMap.addMarker(favoriteMarkerOptions);
-                markers.clear();
-
-                markers.add(marker);
-                assert marker != null;
-                marker.showInfoWindow();
-                return;
-            }
-
-            favoriteMarkerOptions.title(address.toString());
-            Marker marker = mMap.addMarker(favoriteMarkerOptions);
-            markers.clear();
-            markers.add(marker);
-            assert marker != null;
-            marker.showInfoWindow();
+            placeDetailMarker(latLng, favoriteMarkerOptions);
         });
 
         // Drag and Update marker
