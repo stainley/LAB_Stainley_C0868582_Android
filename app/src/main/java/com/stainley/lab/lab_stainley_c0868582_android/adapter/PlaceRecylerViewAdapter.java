@@ -6,9 +6,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.stainley.lab.lab_stainley_c0868582_android.R;
@@ -25,6 +27,7 @@ public class PlaceRecylerViewAdapter extends RecyclerView.Adapter<PlaceRecylerVi
     public PlaceRecylerViewAdapter(List<Place> placeList) {
         this.placeList = placeList;
     }
+
 
     @NonNull
     @Override
@@ -47,6 +50,7 @@ public class PlaceRecylerViewAdapter extends RecyclerView.Adapter<PlaceRecylerVi
             context.startActivity(myPlaceIntent);
         });
     }
+
 
     @Override
     public int getItemCount() {

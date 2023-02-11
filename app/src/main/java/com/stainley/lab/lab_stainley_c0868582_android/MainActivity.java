@@ -3,9 +3,11 @@ package com.stainley.lab.lab_stainley_c0868582_android;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -15,7 +17,9 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Toast;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.stainley.lab.lab_stainley_c0868582_android.adapter.PlaceRecylerViewAdapter;
 import com.stainley.lab.lab_stainley_c0868582_android.databinding.ActivityMainBinding;
 import com.stainley.lab.lab_stainley_c0868582_android.model.Place;
@@ -33,6 +37,25 @@ public class MainActivity extends AppCompatActivity {
     private PlaceRecylerViewAdapter adapter;
     private List<Place> places = new ArrayList<>();
 
+
+    ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT | ItemTouchHelper.DOWN | ItemTouchHelper.UP) {
+
+        @Override
+        public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+            return false;
+        }
+
+        @Override
+        public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
+
+            int position = viewHolder.getAdapterPosition();
+            placeViewModel.deletePlace(places.get(swipeDir));
+            places.remove(position);
+            adapter.notifyDataSetChanged();
+
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,6 +71,9 @@ public class MainActivity extends AppCompatActivity {
         adapter = new PlaceRecylerViewAdapter(places);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
+        itemTouchHelper.attachToRecyclerView(recyclerView);
 
         placeViewModel.getAllPlaces().observe(this, places -> {
             this.places.clear();

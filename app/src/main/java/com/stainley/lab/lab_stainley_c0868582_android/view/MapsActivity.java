@@ -36,6 +36,9 @@ import com.stainley.lab.lab_stainley_c0868582_android.databinding.ActivityMapsBi
 import com.stainley.lab.lab_stainley_c0868582_android.model.Place;
 import com.stainley.lab.lab_stainley_c0868582_android.viewmodel.PlaceViewModel;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -48,7 +51,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LocationListener locationListener;
 
     private Place place;
-    private Marker marker;
+    private List<Marker> markers = new ArrayList<>();
     private Place myFavoritePlace;
 
     @Override
@@ -63,7 +66,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
 
         Toolbar toolbar = binding.toolbar;
-        toolbar.setBackgroundColor(getResources().getColor(R.color.purple_500));
+        toolbar.setBackgroundColor(getResources().getColor(R.color.purple_200));
         setActionBar(toolbar);
         if (getActionBar() != null)
             getActionBar().setDisplayHomeAsUpEnabled(true);
@@ -130,10 +133,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void savePlace(View view) {
 
         PlaceViewModel placeViewModel = new ViewModelProvider.AndroidViewModelFactory(getApplication()).create(PlaceViewModel.class);
+        placeViewModel.insertPlace(place);
         Toast.makeText(this, "Places has been saved", Toast.LENGTH_SHORT).show();
 
-        placeViewModel.insertPlace(place);
         finish();
+    }
+
+    private void clearMarker() {
+        for (Marker marker : markers) {
+            marker.remove();
+        }
+        markers.clear();
     }
 
 
@@ -148,19 +158,33 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        if(marker != null) {
-            marker.remove();
-        }
+
 
         mMap = googleMap;
-        mMap.setMinZoomPreference(15);
+        mMap.setMinZoomPreference(13);
         LatLng placeOnMap;
         if (myFavoritePlace != null) {
             placeOnMap = new LatLng(myFavoritePlace.getLatitude(), myFavoritePlace.getLongitude());
-            mMap.addMarker(new MarkerOptions().position(placeOnMap).title(myFavoritePlace.getPostalCode()));
+            StringBuilder address = new StringBuilder();
+            address.
+                    append(myFavoritePlace.getAdminArea())
+                    .append(", ")
+                    .append(myFavoritePlace.getLocality())
+                    .append(", ")
+                    .append(myFavoritePlace.getPostalCode())
+                    .append(", ")
+                    .append(myFavoritePlace.getThoroughfare());
+
+            Marker marker = mMap.addMarker(new MarkerOptions().position(placeOnMap).title(address.toString()));
+            markers.add(marker);
+            assert marker != null;
+            marker.showInfoWindow();
         } else {
             placeOnMap = new LatLng(43.6532, -79.3832);
-            mMap.addMarker(new MarkerOptions().position(placeOnMap).title("My Current Place"));
+            Marker marker = mMap.addMarker(new MarkerOptions().position(placeOnMap).title("My Current Place"));
+            markers.add(marker);
+            assert marker != null;
+            marker.showInfoWindow();
 
         }
 
@@ -168,6 +192,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         mMap.setOnMapLongClickListener(latLng -> {
+            clearMarker();
+            MarkerOptions favoriteMarkerOptions = new MarkerOptions();
+            favoriteMarkerOptions.draggable(true);
+            favoriteMarkerOptions.position(latLng);
+            favoriteMarkerOptions.infoWindowAnchor(52, 52);
+            favoriteMarkerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
 
             Log.i(TAG, "onLongClickListener: " + latLng);
             Geocoder geocoder = new Geocoder(this, Locale.getDefault());
@@ -201,20 +231,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             } catch (Exception e) {
                 address.append("Could not find the address");
                 e.printStackTrace();
+                place = new Place();
+                place.setLatitude(latLng.latitude);
+                place.setLongitude(latLng.longitude);
+                place.setLocality(new Date().toString());
+                favoriteMarkerOptions.title(place.getLocality());
+                Marker marker = mMap.addMarker(favoriteMarkerOptions);
+                markers.add(marker);
+                assert marker != null;
+                marker.showInfoWindow();
+                return;
             }
 
-            MarkerOptions favoriteMarkerOptions = new MarkerOptions();
-            favoriteMarkerOptions.draggable(true);
             favoriteMarkerOptions.title(address.toString());
-            favoriteMarkerOptions.position(latLng);
-            favoriteMarkerOptions.snippet("Save favorite place");
-            favoriteMarkerOptions.infoWindowAnchor(52, 52);
-            favoriteMarkerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
-            mMap.addMarker(favoriteMarkerOptions);
-
-
+            Marker marker = mMap.addMarker(favoriteMarkerOptions);
+            markers.add(marker);
+            assert marker != null;
+            marker.showInfoWindow();
         });
-
 
 
     }
