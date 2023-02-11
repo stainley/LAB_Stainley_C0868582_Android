@@ -1,15 +1,5 @@
 package com.stainley.lab.lab_stainley_c0868582_android.view;
 
-import static android.app.PendingIntent.getActivity;
-
-import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.fragment.app.FragmentActivity;
-
-import android.Manifest;
-import android.app.ActionBar;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -20,7 +10,18 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
+import android.widget.Toolbar;
+
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -28,15 +29,14 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.stainley.lab.lab_stainley_c0868582_android.R;
 import com.stainley.lab.lab_stainley_c0868582_android.databinding.ActivityMapsBinding;
 import com.stainley.lab.lab_stainley_c0868582_android.model.Place;
+import com.stainley.lab.lab_stainley_c0868582_android.viewmodel.PlaceViewModel;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
     private static final String TAG = MapsActivity.class.getName();
@@ -46,9 +46,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LocationManager locationManager;
     private LocationListener locationListener;
 
-    private double latitude;
-    private double longitude;
     private Place place;
+    private Place myFavoritePlace;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,19 +56,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
 
+        Toolbar toolbar = binding.toolbar;
+        toolbar.setBackgroundColor(getResources().getColor(R.color.purple_500));
+        setActionBar(toolbar);
         if (getActionBar() != null)
             getActionBar().setDisplayHomeAsUpEnabled(true);
+
+        binding.changeMapMode.setOnClickListener(this::changeMapMode);
+
 
         assert mapFragment != null;
         mapFragment.getMapAsync(this);
 
         Intent myPlaceIntent = getIntent();
-        Place myFavoritePlace  = (Place) myPlaceIntent.getSerializableExtra("my_place");
+        myFavoritePlace = (Place) myPlaceIntent.getSerializableExtra("my_place");
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         locationListener = location -> {
@@ -89,6 +93,42 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.map_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+
+            case R.id.menu_satellite:
+
+                mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+                return true;
+
+            case R.id.menu_terrain:
+                mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
+
+                return true;
+            case R.id.menu_hybrid:
+                mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+                return true;
+            case R.id.menu_normal:
+                mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+                return true;
+            default:
+                break;
+        }
+        return false;
+    }
+
+    public void changeMapMode(View view) {
+
+    }
+
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -102,10 +142,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.setMinZoomPreference(15);
+        LatLng placeOnMap;
+        if (myFavoritePlace != null) {
+            placeOnMap = new LatLng(myFavoritePlace.getLatitude(), myFavoritePlace.getLongitude());
+            mMap.addMarker(new MarkerOptions().position(placeOnMap).title(myFavoritePlace.getPostalCode()));
+        } else {
+            placeOnMap = new LatLng(43.6532, -79.3832);
+            mMap.addMarker(new MarkerOptions().position(placeOnMap).title("My Current Place"));
 
-        LatLng toronto = new LatLng(43.6532, -79.3832);
-        //mMap.addMarker(new MarkerOptions().position(toronto).title("Marker in Toronto"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(toronto));
+        }
+
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(placeOnMap));
 
 
         mMap.setOnMapLongClickListener(latLng -> {
@@ -117,6 +164,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 if (addressList != null && addressList.size() > 0) {
                     address.append("\n");
                     place = new Place();
+                    place.setLatitude(latLng.latitude);
+                    place.setLongitude(latLng.longitude);
                     // street name
                     if (addressList.get(0).getThoroughfare() != null) {
                         place.setThoroughfare(addressList.get(0).getThoroughfare());
@@ -141,13 +190,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 e.printStackTrace();
             }
 
-
             MarkerOptions favoriteMarkerOptions = new MarkerOptions();
             favoriteMarkerOptions.draggable(true);
             favoriteMarkerOptions.title(address.toString());
             favoriteMarkerOptions.position(latLng);
             favoriteMarkerOptions.snippet("Save favorite place");
-            favoriteMarkerOptions.infoWindowAnchor(52, 600);
+            favoriteMarkerOptions.infoWindowAnchor(52, 52);
             favoriteMarkerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
             mMap.addMarker(favoriteMarkerOptions);
 
@@ -155,16 +203,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
 
         mMap.setOnMarkerClickListener(marker -> {
-            System.out.println(marker.getTitle());
-            // TODO: save into the DATABASE
-            Log.i(TAG, "onMarkerClicked");
-
-
+            PlaceViewModel placeViewModel = new ViewModelProvider.AndroidViewModelFactory(getApplication()).create(PlaceViewModel.class);
             Toast.makeText(this, "Places has been saved", Toast.LENGTH_SHORT).show();
-            Intent intentPlace = new Intent();
-            intentPlace.putExtra("favoritePlace", place);
 
-            setResult(Activity.RESULT_OK, intentPlace);
+            placeViewModel.insertPlace(place);
             finish();
             return false;
         });

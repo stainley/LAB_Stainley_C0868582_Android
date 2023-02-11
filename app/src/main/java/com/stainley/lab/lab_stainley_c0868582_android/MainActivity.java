@@ -3,6 +3,7 @@ package com.stainley.lab.lab_stainley_c0868582_android;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -41,8 +42,7 @@ public class MainActivity extends AppCompatActivity {
         binding.addPlaceBtn.setOnClickListener(this::addNewFavoritePlace);
 
         placeViewModel = new ViewModelProvider.AndroidViewModelFactory(this.getApplication()).create(PlaceViewModel.class);
-
-
+        setTitle("Favorites Place");
         RecyclerView recyclerView = binding.listFavoritePlaces;
 
         adapter = new PlaceRecylerViewAdapter(places);
@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         placeViewModel.getAllPlaces().observe(this, places -> {
+            this.places.clear();
             this.places.addAll(places);
             adapter.notifyItemChanged(places.size());
         });
@@ -57,22 +58,8 @@ public class MainActivity extends AppCompatActivity {
 
     public void addNewFavoritePlace(View view) {
         Intent mapIntent = new Intent(this, MapsActivity.class);
-        launcher.launch(mapIntent);
+        startActivity(mapIntent);
     }
-
-    private final ActivityResultLauncher<Intent> launcher =
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-
-                if (result.getResultCode() == Activity.RESULT_OK) {
-                    if (result.getData() != null) {
-                        Intent data = result.getData();
-                        Place place = (Place) data.getSerializableExtra("favoritePlace");
-
-                        placeViewModel.insertPlace(place);
-                        //Save into Database
-                    }
-                }
-            });
 
     @Override
     protected void onRestart() {
