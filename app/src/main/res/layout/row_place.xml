@@ -8,20 +8,22 @@
     <androidx.cardview.widget.CardView
         android:id="@+id/place_card"
         android:layout_width="match_parent"
-        android:layout_height="66dp"
+        android:layout_height="76dp"
         android:clickable="true"
         android:focusable="true"
+        android:padding="8dp"
         app:cardBackgroundColor="#E7E0EC"
         app:cardCornerRadius="8dp"
-        app:cardElevation="8dp"
+        app:cardElevation="3dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="8dp">
 
             <TextView
                 android:id="@+id/localityTxt"

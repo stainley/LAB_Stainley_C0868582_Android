@@ -57,6 +57,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Place place;
     private List<Marker> markers = new ArrayList<>();
     private Place myFavoritePlace;
+    private boolean buttonDisable = false;
 
     private SearchView searchView;
 
@@ -87,46 +88,44 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 List<Address> addressList = new ArrayList<>();
                 place = new Place();
                 // checking if the entered location is null or not.
-                if (location != null || location.equals("")) {
-                    // on below line we are creating and initializing a geo coder.
+                // on below line we are creating and initializing a geo coder.
 
-                    Geocoder geocoder = new Geocoder(MapsActivity.this);
-                    try {
+                Geocoder geocoder = new Geocoder(MapsActivity.this);
+                try {
 
-                        addressList = geocoder.getFromLocationName(location, 1);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    // on below line we are getting the location
-                    // from our list a first position.
-                    Address address = addressList.get(0);
-
-                    place.setLatitude(address.getLatitude());
-                    place.setLongitude(address.getLongitude());
-
-                    if (address.getLocality() != null) {
-                        place.setLocality(address.getLocality());
-                    }
-
-                    if (address.getAdminArea() != null) {
-                        place.setAdminArea(address.getAdminArea());
-                    }
-
-                    if (address.getThoroughfare() != null) {
-                        place.setThoroughfare(address.getThoroughfare());
-                    }
-
-                    if (address.getPostalCode() != null) {
-                        place.setPostalCode(address.getPostalCode());
-                    }
-
-                    LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
-
-                    mMap.addMarker(new MarkerOptions().position(latLng).title(location));
-
-                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10));
-
+                    addressList = geocoder.getFromLocationName(location, 1);
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
+                // on below line we are getting the location
+                // from our list a first position.
+                Address address = addressList.get(0);
+
+                place.setLatitude(address.getLatitude());
+                place.setLongitude(address.getLongitude());
+
+                if (address.getLocality() != null) {
+                    place.setLocality(address.getLocality());
+                }
+
+                if (address.getAdminArea() != null) {
+                    place.setAdminArea(address.getAdminArea());
+                }
+
+                if (address.getThoroughfare() != null) {
+                    place.setThoroughfare(address.getThoroughfare());
+                }
+
+                if (address.getPostalCode() != null) {
+                    place.setPostalCode(address.getPostalCode());
+                }
+
+                LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
+
+                mMap.addMarker(new MarkerOptions().position(latLng).title(location));
+
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10));
+
                 return false;
             }
 
@@ -141,6 +140,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         Intent myPlaceIntent = getIntent();
         myFavoritePlace = (Place) myPlaceIntent.getSerializableExtra("my_place");
+        buttonDisable = myPlaceIntent.getBooleanExtra("button", false);
+
+        if (buttonDisable) {
+            binding.savePlace.setVisibility(View.INVISIBLE);
+        }
+
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         locationListener = location -> {

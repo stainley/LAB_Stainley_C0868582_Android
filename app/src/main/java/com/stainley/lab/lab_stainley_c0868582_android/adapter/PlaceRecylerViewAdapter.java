@@ -48,6 +48,7 @@ public class PlaceRecylerViewAdapter extends RecyclerView.Adapter<PlaceRecylerVi
         holder.cardView.setOnClickListener(view -> {
             Intent myPlaceIntent = new Intent(context, MapsActivity.class);
             myPlaceIntent.putExtra("my_place", placeList.get(position));
+            myPlaceIntent.putExtra("button", true);
             context.startActivity(myPlaceIntent);
         });
     }
