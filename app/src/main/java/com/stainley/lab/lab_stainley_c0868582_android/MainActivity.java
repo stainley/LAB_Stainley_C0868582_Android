@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
     private List<Place> places = new ArrayList<>();
 
 
-    ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT | ItemTouchHelper.DOWN | ItemTouchHelper.UP) {
+    ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
 
         @Override
         public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
@@ -49,10 +49,9 @@ public class MainActivity extends AppCompatActivity {
         public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
 
             int position = viewHolder.getAdapterPosition();
-            placeViewModel.deletePlace(places.get(swipeDir));
+            placeViewModel.deletePlace(places.get(position));
             places.remove(position);
             adapter.notifyDataSetChanged();
-
         }
     };
 

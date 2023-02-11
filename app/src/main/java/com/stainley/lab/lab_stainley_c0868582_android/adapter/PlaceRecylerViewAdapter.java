@@ -43,6 +43,7 @@ public class PlaceRecylerViewAdapter extends RecyclerView.Adapter<PlaceRecylerVi
     public void onBindViewHolder(@NonNull PlaceViewHolder holder, int position) {
         holder.localityTxt.setText("City: " + placeList.get(position).getLocality());
         holder.postalCodeTxt.setText("Postal Code: " + placeList.get(position).getPostalCode());
+        holder.thoroughfareTxt.setText("Street: " + placeList.get(position).getThoroughfare());
 
         holder.cardView.setOnClickListener(view -> {
             Intent myPlaceIntent = new Intent(context, MapsActivity.class);
@@ -61,11 +62,13 @@ public class PlaceRecylerViewAdapter extends RecyclerView.Adapter<PlaceRecylerVi
         private CardView cardView;
         private TextView localityTxt;
         private TextView postalCodeTxt;
+        private TextView thoroughfareTxt;
 
         public PlaceViewHolder(@NonNull View itemView) {
             super(itemView);
             localityTxt = itemView.findViewById(R.id.localityTxt);
             postalCodeTxt = itemView.findViewById(R.id.postalCodeTxt);
+            thoroughfareTxt = itemView.findViewById(R.id.thoroughfareTxt);
             cardView = itemView.findViewById(R.id.place_card);
         }
     }

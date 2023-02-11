@@ -9,6 +9,8 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -62,17 +64,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         setContentView(binding.getRoot());
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
 
         Toolbar toolbar = binding.toolbar;
         toolbar.setBackgroundColor(getResources().getColor(R.color.purple_200));
         setActionBar(toolbar);
-        if (getActionBar() != null)
-            getActionBar().setDisplayHomeAsUpEnabled(true);
+        if (getActionBar() != null) getActionBar().setDisplayHomeAsUpEnabled(true);
 
         binding.savePlace.setOnClickListener(this::savePlace);
-
 
         assert mapFragment != null;
         mapFragment.getMapAsync(this);
@@ -82,20 +81,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         locationListener = location -> {
-            Log.i(TAG, "onLocationChanged: " + location);
-            //updateLocationInfo(location);
+
         };
 
-        // if the permission is granted, we request the update.
-        // if the permission is not granted, we request for the access.
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE);
-        } else {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-
-            Location lasKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            //updateLocationInfo(lasKnownLocation);
-        }
     }
 
     @Override
@@ -139,6 +127,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         finish();
     }
 
+    public void updatePlace(Place newFavoritePlace) {
+        PlaceViewModel placeViewModel = new ViewModelProvider.AndroidViewModelFactory(getApplication()).create(PlaceViewModel.class);
+        placeViewModel.updatePlace(newFavoritePlace);
+        Toast.makeText(this, "Updated place", Toast.LENGTH_SHORT).show();
+    }
+
     private void clearMarker() {
         for (Marker marker : markers) {
             marker.remove();
@@ -159,23 +153,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
 
-
         mMap = googleMap;
         mMap.setMinZoomPreference(13);
         LatLng placeOnMap;
         if (myFavoritePlace != null) {
             placeOnMap = new LatLng(myFavoritePlace.getLatitude(), myFavoritePlace.getLongitude());
             StringBuilder address = new StringBuilder();
-            address.
-                    append(myFavoritePlace.getAdminArea())
-                    .append(", ")
-                    .append(myFavoritePlace.getLocality())
-                    .append(", ")
-                    .append(myFavoritePlace.getPostalCode())
-                    .append(", ")
-                    .append(myFavoritePlace.getThoroughfare());
+            address.append(myFavoritePlace.getAdminArea()).append(", ").append(myFavoritePlace.getLocality()).append(", ").append(myFavoritePlace.getPostalCode()).append(", ").append(myFavoritePlace.getThoroughfare());
 
-            Marker marker = mMap.addMarker(new MarkerOptions().position(placeOnMap).title(address.toString()));
+            Marker marker = mMap.addMarker(new MarkerOptions().position(placeOnMap).title(address.toString()).draggable(true));
             markers.add(marker);
             assert marker != null;
             marker.showInfoWindow();
@@ -200,6 +186,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             favoriteMarkerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
 
             Log.i(TAG, "onLongClickListener: " + latLng);
+            //placeDetailMarker(latLng, favoriteMarkerOptions);
             Geocoder geocoder = new Geocoder(this, Locale.getDefault());
             StringBuilder address = new StringBuilder();
             try {
@@ -237,6 +224,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 place.setLocality(new Date().toString());
                 favoriteMarkerOptions.title(place.getLocality());
                 Marker marker = mMap.addMarker(favoriteMarkerOptions);
+                markers.clear();
+
                 markers.add(marker);
                 assert marker != null;
                 marker.showInfoWindow();
@@ -245,12 +234,96 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             favoriteMarkerOptions.title(address.toString());
             Marker marker = mMap.addMarker(favoriteMarkerOptions);
+            markers.clear();
             markers.add(marker);
             assert marker != null;
             marker.showInfoWindow();
         });
 
+        // Drag and Update marker
+        mMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+            @Override
+            public void onMarkerDrag(@NonNull Marker marker) {
 
+            }
+
+            @Override
+            public void onMarkerDragEnd(@NonNull Marker marker) {
+                //myFavoritePlace
+
+
+                MarkerOptions favoriteMarkerOptions = new MarkerOptions();
+                favoriteMarkerOptions.draggable(true);
+                favoriteMarkerOptions.position(marker.getPosition());
+                favoriteMarkerOptions.infoWindowAnchor(52, 52);
+                favoriteMarkerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
+                placeDetailMarker(marker.getPosition(), favoriteMarkerOptions);
+
+                myFavoritePlace = place;
+                // TODO: update in the DATABASE
+                updatePlace(myFavoritePlace);
+
+            }
+
+            @Override
+            public void onMarkerDragStart(@NonNull Marker marker) {
+            }
+        });
+
+    }
+
+    private void placeDetailMarker(LatLng latLng, MarkerOptions favoriteMarkerOptions) {
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        StringBuilder address = new StringBuilder();
+        try {
+            List<Address> addressList = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
+            if (addressList != null && addressList.size() > 0) {
+                address.append("\n");
+                place = new Place();
+                place.setLatitude(latLng.latitude);
+                place.setLongitude(latLng.longitude);
+                // street name
+                if (addressList.get(0).getThoroughfare() != null) {
+                    place.setThoroughfare(addressList.get(0).getThoroughfare());
+                    address.append(addressList.get(0).getThoroughfare()).append("\n");
+                }
+                if (addressList.get(0).getLocality() != null) {
+                    place.setLocality(addressList.get(0).getLocality());
+                    address.append(addressList.get(0).getLocality()).append(" ");
+                }
+
+                if (addressList.get(0).getPostalCode() != null) {
+                    place.setPostalCode(addressList.get(0).getPostalCode());
+                    address.append(addressList.get(0).getPostalCode()).append(" ");
+                }
+                if (addressList.get(0).getAdminArea() != null) {
+                    place.setAdminArea(addressList.get(0).getAdminArea());
+                    address.append(addressList.get(0).getAdminArea());
+                }
+            }
+        } catch (Exception e) {
+            address.append("Could not find the address");
+            e.printStackTrace();
+            place = new Place();
+            place.setLatitude(latLng.latitude);
+            place.setLongitude(latLng.longitude);
+            place.setLocality(new Date().toString());
+            favoriteMarkerOptions.title(place.getLocality());
+            Marker marker = mMap.addMarker(favoriteMarkerOptions);
+            markers.clear();
+
+            markers.add(marker);
+            assert marker != null;
+            marker.showInfoWindow();
+            return;
+        }
+
+        favoriteMarkerOptions.title(address.toString());
+        Marker marker = mMap.addMarker(favoriteMarkerOptions);
+        markers.clear();
+        markers.add(marker);
+        assert marker != null;
+        marker.showInfoWindow();
     }
 
     @Override
