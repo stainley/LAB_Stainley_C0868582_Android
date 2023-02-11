@@ -1,16 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
         android:id="@+id/menu_satellite"
-        android:title="Satellite" />
+        android:orderInCategory="100"
+        android:title="Satellite"
+        app:showAsAction="never" />
     <item
         android:id="@+id/menu_terrain"
-        android:title="Terrain" />
+        android:orderInCategory="101"
+        android:title="Terrain"
+        app:showAsAction="never" />
     <item
         android:id="@+id/menu_hybrid"
-        android:title="Hybrid" />
+        android:orderInCategory="102"
+        android:title="Hybrid"
+        app:showAsAction="never" />
     <item
         android:id="@+id/menu_normal"
-        android:title="Normal" />
+        android:orderInCategory="103"
+        android:title="Normal"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_search"
+        android:icon="@android:drawable/ic_menu_search"
+        android:title="Search location"
+        app:actionViewClass="androidx.appcompat.widget.SearchView"
+        app:showAsAction="ifRoom" />
 </menu>

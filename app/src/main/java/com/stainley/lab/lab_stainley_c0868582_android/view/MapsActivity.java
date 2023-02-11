@@ -3,6 +3,7 @@ package com.stainley.lab.lab_stainley_c0868582_android.view;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -72,7 +73,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
 
         Toolbar toolbar = binding.toolbar;
-        toolbar.setBackgroundColor(getResources().getColor(R.color.purple_200));
+
+
+        toolbar.setTitle("Favorite Map");
         setActionBar(toolbar);
         if (getActionBar() != null) getActionBar().setDisplayHomeAsUpEnabled(true);
 
